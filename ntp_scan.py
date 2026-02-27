@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ipaddress
+import json
 import math
 import socket
 import struct
@@ -114,6 +115,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Also query network and broadcast addresses",
     )
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print machine-readable JSON instead of text output",
+    )
     return parser.parse_args()
 
 
@@ -132,7 +138,54 @@ def hosts_to_scan(network_cidr: str, include_special: bool) -> list[str]:
     return addresses
 
 
-def print_results(results: list[NtpResult], scanned: int, elapsed: float) -> None:
+def build_report(results: list[NtpResult], scanned: int, elapsed: float) -> dict:
+    report = {
+        "generated_at": int(time.time()),
+        "scanned_hosts": scanned,
+        "ntp_servers": len(results),
+        "scan_time_s": round(elapsed, 3),
+        "servers": [],
+        "stats": None,
+    }
+
+    if not results:
+        return report
+
+    sorted_results = sorted(results, key=lambda r: abs(r.offset_ms))
+    report["servers"] = [
+        {
+            "host": result.host,
+            "stratum": result.stratum,
+            "offset_ms": round(result.offset_ms, 3),
+            "delay_ms": round(result.delay_ms, 3),
+            "leap": result.leap,
+            "version": result.version,
+        }
+        for result in sorted_results
+    ]
+
+    offsets = [r.offset_ms for r in results]
+    abs_offsets = [abs(v) for v in offsets]
+    rms = math.sqrt(sum(v * v for v in offsets) / len(offsets))
+    report["stats"] = {
+        "min_offset_ms": round(min(offsets), 3),
+        "max_offset_ms": round(max(offsets), 3),
+        "mean_offset_ms": round(statistics.mean(offsets), 3),
+        "median_offset_ms": round(statistics.median(offsets), 3),
+        "stdev_offset_ms": round(statistics.stdev(offsets), 3) if len(offsets) > 1 else None,
+        "rms_offset_ms": round(rms, 3),
+        "mean_abs_offset_ms": round(statistics.mean(abs_offsets), 3),
+        "max_abs_offset_ms": round(max(abs_offsets), 3),
+    }
+    return report
+
+
+def print_results(results: list[NtpResult], scanned: int, elapsed: float, as_json: bool) -> None:
+    report = build_report(results, scanned, elapsed)
+    if as_json:
+        print(json.dumps(report, separators=(",", ":")))
+        return
+
     print(f"Scanned hosts : {scanned}")
     print(f"NTP servers   : {len(results)}")
     print(f"Scan time     : {elapsed:.2f} s")
@@ -182,7 +235,7 @@ def main() -> int:
                 results.append(result)
 
     elapsed = time.time() - start
-    print_results(results, scanned=len(hosts), elapsed=elapsed)
+    print_results(results, scanned=len(hosts), elapsed=elapsed, as_json=args.json)
     return 0
 
 
