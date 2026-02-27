@@ -1,5 +1,5 @@
 name: "NTP Timeshow Scanner"
-version: "1.0.2"
+version: "1.0.3"
 slug: "ntp_timeshow"
 description: "Scan a subnet for NTP servers and publish offset statistics to MQTT"
 url: "https://github.com/Kitsok/timeshow"

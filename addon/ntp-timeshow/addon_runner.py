@@ -103,7 +103,11 @@ def main() -> int:
     topic = options["mqtt_topic"].strip("/")
     interval = max(5, int(options["interval_seconds"]))
 
-    client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    # Support both paho-mqtt 2.x (CallbackAPIVersion exists) and 1.x (no enum).
+    if hasattr(mqtt, "CallbackAPIVersion"):
+        client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
+    else:
+        client = mqtt.Client()
     if options.get("mqtt_username"):
         client.username_pw_set(options["mqtt_username"], options.get("mqtt_password", ""))
 
