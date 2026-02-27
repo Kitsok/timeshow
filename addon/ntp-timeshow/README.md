@@ -48,3 +48,4 @@ Example payload:
 - `mqtt_topic`: Topic for report payload.
 - `mqtt_discovery`: Publish Home Assistant MQTT discovery entities.
 - `mqtt_discovery_prefix`: Discovery prefix (usually `homeassistant`).
+- `verbose`: Enable detailed add-on logs for MQTT and scan cycles.

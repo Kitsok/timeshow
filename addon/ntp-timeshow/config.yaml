@@ -1,5 +1,5 @@
 name: "NTP Timeshow Scanner"
-version: "1.0.4"
+version: "1.0.6"
 slug: "ntp_timeshow"
 description: "Scan a subnet for NTP servers and publish offset statistics to MQTT"
 url: "https://github.com/Kitsok/timeshow"
@@ -25,6 +25,7 @@ options:
   mqtt_topic: "timeshow/ntp_scan"
   mqtt_discovery: true
   mqtt_discovery_prefix: "homeassistant"
+  verbose: true
 schema:
   network: str
   interval_seconds: int
@@ -38,3 +39,4 @@ schema:
   mqtt_topic: str
   mqtt_discovery: bool
   mqtt_discovery_prefix: str
+  verbose: bool
